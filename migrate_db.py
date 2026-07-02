@@ -42,8 +42,8 @@ def run_migrations():
 
             # Seed default users for hospital 'abc'
             default_users = [
-                ('abc', 'kanhaiyabhatt9528@gmail.com', hash_password('admin'), 'Admin'),
-                ('abc', 'staff', hash_password('staff'), 'Staff')
+                ('COER Hospital', 'kanhaiyabhatt9528@gmail.com', hash_password('Ka6vkf1@'), 'Admin'),
+                ('COER Hospital', 'staff', hash_password('staff'), 'Staff')
             ]
             for hospital, username, p_hash, role in default_users:
                 cursor.execute("""
