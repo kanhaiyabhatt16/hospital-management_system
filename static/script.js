@@ -782,7 +782,7 @@ async function updateDashboardCharts() {
         }
 
         appointmentsData.forEach(app => {
-            const appDate = app.date.split('T')[0]; // Ensure date format matches
+            const appDate = app.date.substring(0, 10); // Ensure date format matches
             if (dailyAppointments.hasOwnProperty(appDate)) {
                 dailyAppointments[appDate]++;
             }
@@ -806,7 +806,7 @@ async function updateDashboardCharts() {
         }
 
         billsData.filter(bill => bill.status === 'Paid').forEach(bill => {
-            const billDate = bill.date.split('T')[0];
+            const billDate = bill.date.substring(0, 10);
             if (dailyRevenue.hasOwnProperty(billDate)) {
                 dailyRevenue[billDate] += parseFloat(bill.amount);
             }
@@ -840,7 +840,7 @@ async function changeDashboardTimePeriod(type, period) {
                     aggregatedData[date.toISOString().split('T')[0]] = 0;
                 }
                 appointmentsData.forEach(app => {
-                    const appDate = app.date.split('T')[0];
+                    const appDate = app.date.substring(0, 10);
                     if (aggregatedData.hasOwnProperty(appDate)) {
                         aggregatedData[appDate]++;
                     }
@@ -873,7 +873,7 @@ async function changeDashboardTimePeriod(type, period) {
                     aggregatedData[date.toISOString().split('T')[0]] = 0;
                 }
                 billsData.filter(bill => bill.status === 'Paid').forEach(bill => {
-                    const billDate = bill.date.split('T')[0];
+                    const billDate = bill.date.substring(0, 10);
                     if (aggregatedData.hasOwnProperty(billDate)) {
                         aggregatedData[billDate] += parseFloat(bill.amount);
                     }
