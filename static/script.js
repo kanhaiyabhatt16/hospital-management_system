@@ -140,6 +140,20 @@ function resizeActiveCharts() {
 // --- Utility Functions ---
 
 /**
+ * Safely parses a YYYY-MM-DD date string as a local Date at midnight.
+ * @param {string} dateStr - The date string.
+ * @returns {Date} - Local Date object.
+ */
+function parseLocalDate(dateStr) {
+    if (!dateStr) return new Date();
+    const parts = dateStr.substring(0, 10).split('-');
+    if (parts.length === 3) {
+        return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    }
+    return new Date(dateStr);
+}
+
+/**
  * Fetches data from the API.
  * @param {string} endpoint - The API endpoint.
  * @returns {Promise<Array|Object>} - The JSON response data.
@@ -849,14 +863,50 @@ async function changeDashboardTimePeriod(type, period) {
                 const data = Object.values(aggregatedData);
                 createChart('appointmentsChart', 'line', 'Appointments Trend (Daily)', labels, data, currentDashboardCharts);
             } else if (period === 'weekly') {
-                // For simplicity, generate random data for weekly/monthly for now
-                // In a real app, you'd aggregate database data by week/month
-                const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-                const data = labels.map(() => Math.floor(Math.random() * 100) + 50);
+                const labels = [];
+                const data = [];
+                for (let i = 3; i >= 0; i--) {
+                    const start = new Date(now);
+                    start.setDate(now.getDate() - (i + 1) * 7 + 1);
+                    const end = new Date(now);
+                    end.setDate(now.getDate() - i * 7);
+                    
+                    const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    labels.push(`${startStr} - ${endStr}`);
+                    
+                    let count = 0;
+                    appointmentsData.forEach(app => {
+                        const appDate = parseLocalDate(app.date);
+                        appDate.setHours(0,0,0,0);
+                        const compareStart = new Date(start);
+                        compareStart.setHours(0,0,0,0);
+                        const compareEnd = new Date(end);
+                        compareEnd.setHours(23,59,59,999);
+                        if (appDate >= compareStart && appDate <= compareEnd) {
+                            count++;
+                        }
+                    });
+                    data.push(count);
+                }
                 createChart('appointmentsChart', 'bar', 'Appointments Trend (Weekly)', labels, data, currentDashboardCharts);
             } else if (period === 'monthly') {
-                const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']; // Example months
-                const data = labels.map(() => Math.floor(Math.random() * 300) + 100);
+                const labels = [];
+                const data = [];
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const monthLabel = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                    labels.push(monthLabel);
+                    
+                    let count = 0;
+                    appointmentsData.forEach(app => {
+                        const appDate = parseLocalDate(app.date);
+                        if (appDate.getFullYear() === d.getFullYear() && appDate.getMonth() === d.getMonth()) {
+                            count++;
+                        }
+                    });
+                    data.push(count);
+                }
                 createChart('appointmentsChart', 'bar', 'Appointments Trend (Monthly)', labels, data, currentDashboardCharts);
             }
         }
@@ -882,12 +932,50 @@ async function changeDashboardTimePeriod(type, period) {
                 const data = Object.values(aggregatedData);
                 createChart('revenueChart', 'line', 'Revenue Trend (Daily)', labels, data, currentDashboardCharts);
             } else if (period === 'weekly') {
-                const labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-                const data = labels.map(() => Math.floor(Math.random() * 5000) + 2000);
+                const labels = [];
+                const data = [];
+                for (let i = 3; i >= 0; i--) {
+                    const start = new Date(now);
+                    start.setDate(now.getDate() - (i + 1) * 7 + 1);
+                    const end = new Date(now);
+                    end.setDate(now.getDate() - i * 7);
+                    
+                    const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    labels.push(`${startStr} - ${endStr}`);
+                    
+                    let sum = 0;
+                    billsData.filter(bill => bill.status === 'Paid').forEach(bill => {
+                        const billDate = parseLocalDate(bill.date);
+                        billDate.setHours(0,0,0,0);
+                        const compareStart = new Date(start);
+                        compareStart.setHours(0,0,0,0);
+                        const compareEnd = new Date(end);
+                        compareEnd.setHours(23,59,59,999);
+                        if (billDate >= compareStart && billDate <= compareEnd) {
+                            sum += parseFloat(bill.amount);
+                        }
+                    });
+                    data.push(sum);
+                }
                 createChart('revenueChart', 'bar', 'Revenue Trend (Weekly)', labels, data, currentDashboardCharts);
             } else if (period === 'monthly') {
-                const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-                const data = labels.map(() => Math.floor(Math.random() * 10000) + 5000);
+                const labels = [];
+                const data = [];
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                    const monthLabel = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+                    labels.push(monthLabel);
+                    
+                    let sum = 0;
+                    billsData.filter(bill => bill.status === 'Paid').forEach(bill => {
+                        const billDate = parseLocalDate(bill.date);
+                        if (billDate.getFullYear() === d.getFullYear() && billDate.getMonth() === d.getMonth()) {
+                            sum += parseFloat(bill.amount);
+                        }
+                    });
+                    data.push(sum);
+                }
                 createChart('revenueChart', 'bar', 'Revenue Trend (Monthly)', labels, data, currentDashboardCharts);
             }
         }
