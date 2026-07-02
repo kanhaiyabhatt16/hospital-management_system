@@ -305,7 +305,7 @@ function createChart(canvasId, type, label, labels, data, chartCache) {
     }
     const chartContext = ctx.getContext('2d');
 
-    if (chartCache[canvasId]) {
+    if (chartCache[canvasId] && typeof chartCache[canvasId].destroy === 'function') {
         chartCache[canvasId].destroy();
     }
 
@@ -604,14 +604,21 @@ darkModeToggle.addEventListener('change', function () {
 });
 
 function updateChartsOnThemeChange() {
-    // Destroy all existing charts
-    Object.values(currentDashboardCharts).forEach(chart => chart.destroy());
-    Object.values(currentPatientCharts).forEach(chart => chart.destroy());
-    Object.values(currentDoctorCharts).forEach(chart => chart.destroy());
-    Object.values(currentAppointmentCharts).forEach(chart => chart.destroy());
-    Object.values(currentBillingCharts).forEach(chart => chart.destroy());
-    Object.values(currentMedicalRecordCharts).forEach(chart => chart.destroy());
-    Object.values(currentReportCharts).forEach(chart => chart.destroy());
+    // Destroy all existing charts and clear cache objects
+    Object.values(currentDashboardCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
+    currentDashboardCharts = {};
+    Object.values(currentPatientCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
+    currentPatientCharts = {};
+    Object.values(currentDoctorCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
+    currentDoctorCharts = {};
+    Object.values(currentAppointmentCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
+    currentAppointmentCharts = {};
+    Object.values(currentBillingCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
+    currentBillingCharts = {};
+    Object.values(currentMedicalRecordCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
+    currentMedicalRecordCharts = {};
+    Object.values(currentReportCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
+    currentReportCharts = {};
 
     // Re-render current active charts
     const activeSection = document.querySelector('.management-section.active');
@@ -757,7 +764,7 @@ async function updateDashboardMetrics() {
 
 async function updateDashboardCharts() {
     // Clear existing dashboard charts
-    Object.values(currentDashboardCharts).forEach(chart => chart.destroy());
+    Object.values(currentDashboardCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentDashboardCharts = {};
 
     // Appointments Trend (Daily)
@@ -1081,7 +1088,7 @@ function renderPatientsTable(patients) {
 
 function renderPatientCharts(patients) {
     // Destroy existing charts if any
-    Object.values(currentPatientCharts).forEach(chart => chart.destroy());
+    Object.values(currentPatientCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentPatientCharts = {};
 
     if (patients.length === 0) {
@@ -1194,7 +1201,7 @@ function showAllDoctors() {
     hideAllSubSections('doctor-management');
     renderDoctorsTable(cachedDoctors);
     renderDoctorCharts(cachedDoctors);
-    document.getElementById('doctor-list').style.display = 'block';
+document.getElementById('doctor-list').style.display = 'block';
     document.getElementById('doctor-visualizations').classList.remove('hidden-section');
 }
 
@@ -1333,7 +1340,7 @@ function renderDoctorsTable(doctors) {
 }
 
 function renderDoctorCharts(doctors) {
-    Object.values(currentDoctorCharts).forEach(chart => chart.destroy());
+    Object.values(currentDoctorCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentDoctorCharts = {};
 
     if (doctors.length === 0) {
@@ -1591,7 +1598,7 @@ function renderAppointmentsTable(appointments) {
 }
 
 function renderAppointmentCharts(appointments) {
-    Object.values(currentAppointmentCharts).forEach(chart => chart.destroy());
+    Object.values(currentAppointmentCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentAppointmentCharts = {};
 
     if (appointments.length === 0) {
@@ -1844,7 +1851,7 @@ function renderBillsTable(bills) {
 }
 
 function renderBillingCharts(bills) {
-    Object.values(currentBillingCharts).forEach(chart => chart.destroy());
+    Object.values(currentBillingCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentBillingCharts = {};
 
     if (bills.length === 0) {
@@ -2090,7 +2097,7 @@ function renderMedicalRecordsTable(records) {
 }
 
 function renderMedicalRecordCharts(records) {
-    Object.values(currentMedicalRecordCharts).forEach(chart => chart.destroy());
+    Object.values(currentMedicalRecordCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentMedicalRecordCharts = {};
 
     if (records.length === 0) {
@@ -2212,7 +2219,7 @@ function hideAllReportSections() {
 
 async function renderFinancialReports() {
     // Destroy existing report charts
-    Object.values(currentReportCharts).forEach(chart => chart.destroy());
+    Object.values(currentReportCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentReportCharts = {};
 
     const bills = await fetchData('bills');
@@ -2254,7 +2261,7 @@ async function renderFinancialReports() {
 }
 
 async function renderOperationalReports() {
-    Object.values(currentReportCharts).forEach(chart => chart.destroy());
+    Object.values(currentReportCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentReportCharts = {};
 
     const appointments = await fetchData('appointments');
@@ -2311,7 +2318,7 @@ async function renderOperationalReports() {
 }
 
 async function renderDoctorPerformanceReports() {
-    Object.values(currentReportCharts).forEach(chart => chart.destroy());
+    Object.values(currentReportCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentReportCharts = {};
 
     const doctors = await fetchData('doctors');
@@ -2364,7 +2371,7 @@ async function renderDoctorPerformanceReports() {
 }
 
 async function renderPatientStatisticsReports() {
-    Object.values(currentReportCharts).forEach(chart => chart.destroy());
+    Object.values(currentReportCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentReportCharts = {};
 
     const patients = await fetchData('patients');
@@ -3512,4 +3519,3 @@ function populateTestTypeDropdown(selectId) {
         selectElement.appendChild(option);
     });
 }
-// Heyy , This Is Kanhaiya

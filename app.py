@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, send_file, render_template
 import pymysql
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import os
 from dotenv import load_dotenv
 import io
@@ -64,7 +64,7 @@ def manage_patients(patient_id=None):
                 if patient:
                     # Convert date/time objects to strings if present
                     for key, value in patient.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             patient[key] = str(value)
                     return jsonify(patient), 200
                 return jsonify({"error": "Patient not found"}), 404
@@ -74,7 +74,7 @@ def manage_patients(patient_id=None):
                 # Convert date/time objects to strings for all patients
                 for p in patients:
                     for key, value in p.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             p[key] = str(value)
                 return jsonify(patients), 200
 
@@ -155,7 +155,7 @@ def manage_doctors(doctor_id=None):
                 doctor = cursor.fetchone()
                 if doctor:
                     for key, value in doctor.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             doctor[key] = str(value)
                     return jsonify(doctor), 200
                 return jsonify({"error": "Doctor not found"}), 404
@@ -170,7 +170,7 @@ def manage_doctors(doctor_id=None):
                 doctors = cursor.fetchall()
                 for d in doctors:
                     for key, value in d.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             d[key] = str(value)
                 return jsonify(doctors), 200
 
@@ -245,7 +245,7 @@ def manage_appointments(appointment_id=None):
                 appointment = cursor.fetchone()
                 if appointment:
                     for key, value in appointment.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             appointment[key] = str(value)
                     return jsonify(appointment), 200
                 return jsonify({"error": "Appointment not found"}), 404
@@ -262,7 +262,7 @@ def manage_appointments(appointment_id=None):
                 appointments = cursor.fetchall()
                 for a in appointments:
                     for key, value in a.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             a[key] = str(value)
                 return jsonify(appointments), 200
 
@@ -341,7 +341,7 @@ def manage_bills(bill_id=None):
                 bill = cursor.fetchone()
                 if bill:
                     for key, value in bill.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             bill[key] = str(value)
                     # Handle 'items' JSON string
                     if 'items' in bill and bill['items']:
@@ -365,7 +365,7 @@ def manage_bills(bill_id=None):
                 bills = cursor.fetchall()
                 for b in bills:
                     for key, value in b.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             b[key] = str(value)
                     # Handle 'items' JSON string
                     if 'items' in b and b['items']:
@@ -460,7 +460,7 @@ def manage_records(record_id=None):
                 record = cursor.fetchone()
                 if record:
                     for key, value in record.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             record[key] = str(value)
                     return jsonify(record), 200
                 return jsonify({"error": "Medical record not found"}), 404
@@ -478,7 +478,7 @@ def manage_records(record_id=None):
                 records = cursor.fetchall()
                 for r in records:
                     for key, value in r.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             r[key] = str(value)
                 return jsonify(records), 200
 
@@ -554,7 +554,7 @@ def manage_departments(department_id=None):
                 department = cursor.fetchone()
                 if department:
                     for key, value in department.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             department[key] = str(value)
                     return jsonify(department), 200
                 return jsonify({"error": "Department not found"}), 404
@@ -563,7 +563,7 @@ def manage_departments(department_id=None):
                 departments = cursor.fetchall()
                 for d in departments:
                     for key, value in d.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             d[key] = str(value)
                 return jsonify(departments), 200
 
@@ -634,7 +634,7 @@ def manage_staff(staff_id=None):
                 staff = cursor.fetchone()
                 if staff:
                     for key, value in staff.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             staff[key] = str(value)
                     return jsonify(staff), 200
                 return jsonify({"error": "Staff member not found"}), 404
@@ -648,7 +648,7 @@ def manage_staff(staff_id=None):
                 staff_members = cursor.fetchall()
                 for s in staff_members:
                     for key, value in s.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             s[key] = str(value)
                 return jsonify(staff_members), 200
 
@@ -714,7 +714,7 @@ def manage_insurance(provider_id=None):
                 provider = cursor.fetchone()
                 if provider:
                     for key, value in provider.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             provider[key] = str(value)
                     return jsonify(provider), 200
                 return jsonify({"error": "Insurance provider not found"}), 404
@@ -723,7 +723,7 @@ def manage_insurance(provider_id=None):
                 providers = cursor.fetchall()
                 for p in providers:
                     for key, value in p.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             p[key] = str(value)
                 return jsonify(providers), 200
 
@@ -789,7 +789,7 @@ def manage_test_types(test_id=None):
                 test = cursor.fetchone()
                 if test:
                     for key, value in test.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             test[key] = str(value)
                     return jsonify(test), 200
                 return jsonify({"error": "Test type not found"}), 404
@@ -798,7 +798,7 @@ def manage_test_types(test_id=None):
                 tests = cursor.fetchall()
                 for t in tests:
                     for key, value in t.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             t[key] = str(value)
                 return jsonify(tests), 200
 
@@ -871,7 +871,7 @@ def manage_patient_tests(patient_test_id=None):
                 test = cursor.fetchone()
                 if test:
                     for key, value in test.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             test[key] = str(value)
                     return jsonify(test), 200
                 return jsonify({"error": "Patient test not found"}), 404
@@ -890,7 +890,7 @@ def manage_patient_tests(patient_test_id=None):
                 tests = cursor.fetchall()
                 for t in tests:
                     for key, value in t.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             t[key] = str(value)
                 return jsonify(tests), 200
 
@@ -960,7 +960,7 @@ def manage_inventory(item_id=None):
                 item = cursor.fetchone()
                 if item:
                     for key, value in item.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             item[key] = str(value)
                     return jsonify(item), 200
                 return jsonify({"error": "Inventory item not found"}), 404
@@ -969,7 +969,7 @@ def manage_inventory(item_id=None):
                 items = cursor.fetchall()
                 for i in items:
                     for key, value in i.items():
-                        if isinstance(value, (datetime, timedelta)):
+                        if isinstance(value, (datetime, date, timedelta)):
                             i[key] = str(value)
                 return jsonify(items), 200
 
@@ -1068,7 +1068,7 @@ def get_today_appointments():
         appointments = cursor.fetchall()
         for a in appointments:
             for key, value in a.items():
-                if isinstance(value, (datetime, timedelta)):
+                if isinstance(value, (datetime, date, timedelta)):
                     a[key] = str(value)
         return jsonify(appointments), 200
     except Exception as e:
@@ -1129,7 +1129,7 @@ def get_appointments_list():
         appointments = cursor.fetchall()
         for a in appointments:
             for key, value in a.items():
-                if isinstance(value, (datetime, timedelta)):
+                if isinstance(value, (datetime, date, timedelta)):
                     a[key] = str(value)
         return jsonify(appointments), 200
     except Exception as e:
