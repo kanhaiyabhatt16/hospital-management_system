@@ -13,6 +13,14 @@ load_dotenv()
 # Flask app initialization
 app = Flask(__name__)
 CORS(app) # Enable CORS for all origins by default (for development)
+
+@app.after_request
+def add_header(response):
+    if request.path.startswith('/api/'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+    return response
 # Database configuration
 db_config = {
     "host": os.getenv('DB_HOST'),

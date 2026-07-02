@@ -146,7 +146,9 @@ function resizeActiveCharts() {
  */
 async function fetchData(endpoint) {
     try {
-        const response = await fetch(`${API_BASE_URL}/${endpoint}`);
+        const separator = endpoint.includes('?') ? '&' : '?';
+        const url = `${API_BASE_URL}/${endpoint}${separator}_=${new Date().getTime()}`;
+        const response = await fetch(url);
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
