@@ -5,14 +5,94 @@ import os
 from dotenv import load_dotenv
 import io
 import json
+import re
+import hashlib
 from flask_cors import CORS # Import CORS
-
+from migrate_db import run_migrations
 
 load_dotenv()
 
 # Flask app initialization
 app = Flask(__name__)
 CORS(app) # Enable CORS for all origins by default (for development)
+
+# Run database migrations on startup
+try:
+    run_migrations()
+except Exception as e:
+    print(f"Startup database migration failed: {e}")
+
+def rewrite_query(query, args, hospital):
+    q = " ".join(query.split())
+    q_upper = q.upper()
+
+    if "FROM USERS" in q_upper or "SHOW COLUMNS" in q_upper:
+        return query, args
+
+    if args is None:
+        args = []
+    elif isinstance(args, tuple):
+        args = list(args)
+    elif not isinstance(args, list):
+        args = [args]
+
+    # Extract alias from first FROM table definition
+    alias = ""
+    from_match = re.search(r"FROM\s+(\w+)(?:\s+(\w+))?", q, re.IGNORECASE)
+    if from_match:
+        table_name, potential_alias = from_match.groups()
+        if potential_alias and potential_alias.upper() not in [
+            "JOIN", "LEFT", "RIGHT", "INNER", "WHERE", "ON", "ORDER", "GROUP", "LIMIT", "UNION"
+        ]:
+            alias = potential_alias
+        else:
+            alias = table_name
+
+    hospital_filter = f"{alias}.hospital = %s" if alias else "hospital = %s"
+
+    # INSERT
+    if q_upper.startswith("INSERT INTO"):
+        match = re.match(r"INSERT\s+INTO\s+(\w+)\s*\((.*?)\)\s*VALUES\s*\((.*?)\)", q, re.IGNORECASE)
+        if match:
+            table, cols, vals = match.groups()
+            new_cols = cols + ", hospital"
+            new_vals = vals + ", %s"
+            new_query = f"INSERT INTO {table} ({new_cols}) VALUES ({new_vals})"
+            args.append(hospital)
+            return new_query, args
+
+    # UPDATE / DELETE / SELECT
+    else:
+        suffixes = ["ORDER BY", "GROUP BY", "LIMIT"]
+        suffix_idx = len(q)
+        suffix_str = ""
+        for s in suffixes:
+            idx = q_upper.rfind(s)
+            if idx != -1 and idx < suffix_idx:
+                suffix_idx = idx
+                suffix_str = q[idx:]
+        
+        base_query = q[:suffix_idx].strip()
+        base_upper = base_query.upper()
+        
+        if "WHERE" in base_upper:
+            new_base = base_query + f" AND {hospital_filter}"
+        else:
+            new_base = base_query + f" WHERE {hospital_filter}"
+            
+        new_query = new_base + (" " + suffix_str if suffix_str else "")
+        args.append(hospital)
+        return new_query, args
+
+    return query, args
+
+class HospitalCursor(pymysql.cursors.DictCursor):
+    def execute(self, query, args=None):
+        from flask import request, has_request_context
+        if has_request_context():
+            hospital = request.headers.get('X-Hospital-Name', 'abc')
+            query, args = rewrite_query(query, args, hospital)
+        return super().execute(query, args)
 
 @app.after_request
 def add_header(response):
@@ -34,7 +114,9 @@ db_config = {
 
 def get_db_connection():
     """Establishes a new database connection."""
-    return pymysql.connect(**db_config)
+    conn = pymysql.connect(**db_config)
+    conn.cursorclass = HospitalCursor
+    return conn
 
 # --- Error Handlers ---
 @app.errorhandler(404)
@@ -53,6 +135,40 @@ def bad_request(error):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+# --- Authentication API ---
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.json
+    if not data or not data.get('hospital') or not data.get('username') or not data.get('password'):
+        return jsonify({"error": "Please provide hospital, username, and password"}), 400
+    
+    hospital = data.get('hospital')
+    username = data.get('username')
+    password = data.get('password')
+    
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    conn = get_db_connection()
+    # Explicitly use standard DictCursor to bypass the automatic HospitalCursor interceptor
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    try:
+        sql = "SELECT username, role FROM users WHERE hospital = %s AND username = %s AND password_hash = %s"
+        cursor.execute(sql, (hospital, username, password_hash))
+        user = cursor.fetchone()
+        if user:
+            return jsonify({
+                "message": "Login successful",
+                "username": user['username'],
+                "role": user['role'],
+                "hospital": hospital
+            }), 200
+        return jsonify({"error": "Invalid credentials"}), 401
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 # -----------------------------------------------------------
 # API Endpoints (from your provided 1.1.py, kept as is)

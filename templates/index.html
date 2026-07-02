@@ -13,6 +13,32 @@
 
 </head>
 <body>
+    <!-- Login Screen Overlay -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-box">
+            <div class="login-header">
+                <h2>Hospital Management System</h2>
+                <p>Enter your hospital code & credentials to connect</p>
+            </div>
+            <div id="loginError" class="login-error" style="display: none;"></div>
+            <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+                <div class="form-group">
+                    <label for="loginHospital"><i class="fas fa-hospital"></i> Hospital Name/Code</label>
+                    <input type="text" id="loginHospital" placeholder="e.g. abc" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginUsername"><i class="fas fa-user"></i> Username / Email</label>
+                    <input type="text" id="loginUsername" placeholder="e.g. kanhaiyabhatt9528@gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPassword"><i class="fas fa-key"></i> Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-login"><i class="fas fa-sign-in-alt"></i> Login</button>
+            </form>
+        </div>
+    </div>
+
     <div class="header">
         <div class="header-left">
             <button type="button" class="menu-btn" id="mobileMenuBtn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="sidebar" onclick="toggleMobileSidebar()">
@@ -40,82 +66,82 @@
                 <i class="fas fa-times"></i>
             </button>
             <div class="nav-menu" id="navMenu">
-                <div class="nav-item">
+                <div class="nav-item" id="nav-dashboard">
                     <a href="#" class="nav-link active" onclick="showDashboard()">
                         <i class="fas fa-tachometer-alt"></i>
                         <span>Dashboard</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-patient">
                     <a href="#" class="nav-link" onclick="showSection('patient-management')">
                         <i class="fas fa-procedures"></i>
                         <span>Patient Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-doctor">
                     <a href="#" class="nav-link" onclick="showSection('doctor-management')">
                         <i class="fas fa-user-md"></i>
                         <span>Doctor Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-appointment">
                     <a href="#" class="nav-link" onclick="showSection('appointment-management')">
                         <i class="fas fa-calendar-check"></i>
                         <span>Appointment Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-billing">
                     <a href="#" class="nav-link" onclick="showSection('billing-management')">
                         <i class="fas fa-file-invoice-dollar"></i>
                         <span>Billing Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-records">
                     <a href="#" class="nav-link" onclick="showSection('medical-records')">
                         <i class="fas fa-file-medical"></i>
                         <span>Medical Records</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-reports">
                     <a href="#" class="nav-link" onclick="showSection('reports-analytics')">
                         <i class="fas fa-chart-bar"></i>
                         <span>Reports & Analytics</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-departments">
                     <a href="#" class="nav-link" onclick="showSection('department-management')">
                         <i class="fas fa-sitemap"></i>
                         <span>Department Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-staff">
                     <a href="#" class="nav-link" onclick="showSection('staff-management')">
                         <i class="fas fa-users"></i>
                         <span>Staff Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-insurance">
                     <a href="#" class="nav-link" onclick="showSection('insurance-management')">
                         <i class="fas fa-handshake"></i>
                         <span>Insurance Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-test">
                     <a href="#" class="nav-link" onclick="showSection('test-management')">
                         <i class="fas fa-flask"></i>
                         <span>Test Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-inventory">
                     <a href="#" class="nav-link" onclick="showSection('inventory-management')">
                         <i class="fas fa-boxes"></i>
                         <span>Inventory Management</span>
                     </a>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="nav-logout">
                     <a href="#" class="nav-link" onclick="logout()">
                         <i class="fas fa-sign-out-alt"></i>
-                        <span>Exit</span>
+                        <span>Logout</span>
                     </a>
                 </div>
             </div>

@@ -162,7 +162,12 @@ async function fetchData(endpoint) {
     try {
         const separator = endpoint.includes('?') ? '&' : '?';
         const url = `${API_BASE_URL}/${endpoint}${separator}_=${new Date().getTime()}`;
-        const response = await fetch(url);
+        const hospitalName = sessionStorage.getItem('hospitalName') || 'abc';
+        const response = await fetch(url, {
+            headers: {
+                'X-Hospital-Name': hospitalName
+            }
+        });
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
@@ -184,10 +189,12 @@ async function fetchData(endpoint) {
  */
 async function sendData(endpoint, method, data = null) {
     try {
+        const hospitalName = sessionStorage.getItem('hospitalName') || 'abc';
         const options = {
             method: method,
             headers: {
                 'Content-Type': 'application/json',
+                'X-Hospital-Name': hospitalName
             },
             body: data ? JSON.stringify(data) : null,
         };
@@ -523,30 +530,132 @@ function renderSearchResults(tableBodyId, results, type) {
 
 // --- Common UI/Navigation Logic ---
 
-document.addEventListener('DOMContentLoaded', async function () {
-    // Initial data load for dropdowns etc.
-    await preloadAllData();
+// --- Authentication & Session Handlers ---
 
-    // Set hospital name
-    if (!localStorage.getItem('hospitalName')) {
-        if (hospitalNameModal) {
-            hospitalNameModal.style.display = 'block';
-        }
-    } else {
+function checkAuthSession() {
+    const username = sessionStorage.getItem('username');
+    const role = sessionStorage.getItem('role');
+    const hospitalName = sessionStorage.getItem('hospitalName');
+    
+    const loginOverlay = document.getElementById('loginOverlay');
+    
+    if (username && role && hospitalName) {
+        if (loginOverlay) loginOverlay.style.display = 'none';
+        
+        // Update hospital name label in top navbar
         const hospitalNameEl = document.getElementById('hospitalName');
         if (hospitalNameEl) {
-            hospitalNameEl.textContent = localStorage.getItem('hospitalName');
+            hospitalNameEl.textContent = hospitalName.toUpperCase() + " Hospital Management System";
+        }
+        
+        applyRoleRestrictions(role);
+        return true;
+    } else {
+        if (loginOverlay) loginOverlay.style.display = 'flex';
+        return false;
+    }
+}
+
+async function handleLoginSubmit(event) {
+    event.preventDefault();
+    const hospital = document.getElementById('loginHospital').value.trim();
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    
+    const errorEl = document.getElementById('loginError');
+    if (errorEl) errorEl.style.display = 'none';
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ hospital, username, password })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            sessionStorage.setItem('username', data.username);
+            sessionStorage.setItem('role', data.role);
+            sessionStorage.setItem('hospitalName', data.hospital);
+            
+            // Clear password field
+            document.getElementById('loginPassword').value = '';
+            
+            // Hide login box and setup app
+            checkAuthSession();
+            
+            // Reload all dropdowns and metrics for this hospital
+            await preloadAllData();
+            
+            // If staff, go directly to Patient section; if Admin go to dashboard
+            if (data.role === 'Staff') {
+                showSection('patient-management');
+            } else {
+                showDashboard();
+            }
+        } else {
+            if (errorEl) {
+                errorEl.textContent = data.error || 'Invalid credentials';
+                errorEl.style.display = 'block';
+            }
+        }
+    } catch (err) {
+        console.error('Login error:', err);
+        if (errorEl) {
+            errorEl.textContent = 'Connection error. Please try again.';
+            errorEl.style.display = 'block';
         }
     }
+}
 
+function applyRoleRestrictions(role) {
+    const adminNavIds = [
+        'nav-dashboard',
+        'nav-doctor',
+        'nav-billing',
+        'nav-records',
+        'nav-reports',
+        'nav-departments',
+        'nav-staff',
+        'nav-insurance',
+        'nav-inventory'
+    ];
+    
+    if (role === 'Staff') {
+        // Hide Admin elements
+        adminNavIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+    } else {
+        // Show all elements for Admin
+        adminNavIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = 'block';
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async function () {
     // Dark mode toggle
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
         darkModeToggle.checked = true;
     }
 
-    // Show dashboard by default
-    showDashboard();
+    // Check authentication
+    const isLoggedIn = checkAuthSession();
+    if (isLoggedIn) {
+        await preloadAllData();
+        const role = sessionStorage.getItem('role');
+        if (role === 'Staff') {
+            showSection('patient-management');
+        } else {
+            showDashboard();
+        }
+    }
 
     // Event listener for medical record follow-up checkbox
     const medicalRecordFollowUpRequired = document.getElementById('medicalRecordFollowUpRequired');
@@ -701,11 +810,10 @@ function updateNavActive(activeId) {
 }
 
 function logout() {
-    if (confirm('Are you sure you want to exit?')) {
+    if (confirm('Are you sure you want to log out?')) {
         closeMobileSidebar();
-        alert('Exiting Hospital Management System. Goodbye!');
-        // In a real web app, you might clear session data or redirect to a login page.
-        // window.close() might not work in all modern browsers due to security policies.
+        sessionStorage.clear();
+        checkAuthSession();
     }
 }
 
