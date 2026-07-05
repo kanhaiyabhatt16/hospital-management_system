@@ -948,6 +948,11 @@ async function preloadAllData() {
 // --- DASHBOARD FUNCTIONS ---
 
 async function showDashboard() {
+    const role = sessionStorage.getItem('role');
+    if (role === 'Staff') {
+        showSection('patient-management');
+        return;
+    }
     hideAllSections();
     dashboardSection.classList.add('active');
     updateNavActive('dashboard');
@@ -1174,6 +1179,13 @@ async function changeDashboardTimePeriod(type, period) {
 
 // Function to handle showing management sections and updating nav links
 function showSection(sectionId) {
+    const role = sessionStorage.getItem('role');
+    const allowedStaffSections = ['patient-management', 'appointment-management', 'test-management'];
+    
+    if (role === 'Staff' && !allowedStaffSections.includes(sectionId)) {
+        showSection('patient-management');
+        return;
+    }
     hideAllSections(); // Hide all management sections first
     hideAllSubSections(sectionId); // Hide all sub-sections within the target management section
     document.getElementById(sectionId).classList.add('active'); // Show the target management section
