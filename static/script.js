@@ -545,7 +545,7 @@ function checkAuthSession() {
         // Update hospital name label in top navbar
         const hospitalNameEl = document.getElementById('hospitalName');
         if (hospitalNameEl) {
-            hospitalNameEl.textContent = hospitalName.toUpperCase() + " Hospital Management System";
+            hospitalNameEl.textContent = hospitalName.toUpperCase();
         }
         
         applyRoleRestrictions(role);

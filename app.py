@@ -136,23 +136,55 @@ def bad_request(error):
 def index():
     return render_template('index.html')
 
-# --- Authentication API ---
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.json
     if not data or not data.get('hospital') or not data.get('username') or not data.get('password'):
         return jsonify({"error": "Please provide hospital, username, and password"}), 400
     
-    hospital = data.get('hospital')
-    username = data.get('username')
+    hospital = data.get('hospital').strip()
+    username = data.get('username').strip()
     password = data.get('password')
     
     password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    # Check if this is the super admin credential
+    ADMIN_EMAIL = 'kanhaiyabhatt9528@gmail.com'
+    ADMIN_PASSWORD_HASH = hashlib.sha256(b'Ka6vkf1@').hexdigest()
     
     conn = get_db_connection()
     # Explicitly use standard DictCursor to bypass the automatic HospitalCursor interceptor
     cursor = conn.cursor(pymysql.cursors.DictCursor)
     try:
+        # If logging in as super admin with correct password, auto-create this hospital partition if not exists
+        if username == ADMIN_EMAIL and password_hash == ADMIN_PASSWORD_HASH:
+            # Check if this admin user already exists for this hospital
+            cursor.execute("SELECT * FROM users WHERE hospital = %s AND username = %s", (hospital, username))
+            user = cursor.fetchone()
+            if not user:
+                # Create the Admin user for this hospital
+                cursor.execute("""
+                    INSERT INTO users (hospital, username, password_hash, role)
+                    VALUES (%s, %s, %s, 'Admin')
+                """, (hospital, username, password_hash))
+                
+                # Also auto-create a default staff user for this hospital
+                staff_hash = hashlib.sha256(b'staff').hexdigest()
+                cursor.execute("""
+                    INSERT IGNORE INTO users (hospital, username, password_hash, role)
+                    VALUES (%s, 'staff', %s, 'Staff')
+                """, (hospital, staff_hash))
+                
+                conn.commit()
+            
+            return jsonify({
+                "message": "Login successful",
+                "username": ADMIN_EMAIL,
+                "role": "Admin",
+                "hospital": hospital
+            }), 200
+
+        # Normal login check
         sql = "SELECT username, role FROM users WHERE hospital = %s AND username = %s AND password_hash = %s"
         cursor.execute(sql, (hospital, username, password_hash))
         user = cursor.fetchone()
