@@ -911,17 +911,33 @@ function hideAllSubSections(sectionId) {
 
 // --- Preload Data Function ---
 async function preloadAllData() {
-    cachedPatients = await fetchData('patients') || [];
-    cachedDoctors = await fetchData('doctors') || [];
-    cachedAppointments = await fetchData('appointments') || [];
-    cachedDepartments = await fetchData('departments') || [];
-    cachedBills = await fetchData('bills') || [];
-    cachedMedicalRecords = await fetchData('records') || [];
-    cachedStaff = await fetchData('staff') || [];
-    cachedInsuranceProviders = await fetchData('insurance') || [];
-    cachedTestTypes = await fetchData('tests/types') || [];
-    cachedPatientTests = await fetchData('tests/patients') || [];
-    cachedInventoryItems = await fetchData('inventory') || [];
+    const promises = [
+        fetchData('patients'),
+        fetchData('doctors'),
+        fetchData('appointments'),
+        fetchData('departments'),
+        fetchData('bills'),
+        fetchData('records'),
+        fetchData('staff'),
+        fetchData('insurance'),
+        fetchData('tests/types'),
+        fetchData('tests/patients'),
+        fetchData('inventory')
+    ];
+    
+    const results = await Promise.all(promises);
+    
+    cachedPatients = results[0] || [];
+    cachedDoctors = results[1] || [];
+    cachedAppointments = results[2] || [];
+    cachedDepartments = results[3] || [];
+    cachedBills = results[4] || [];
+    cachedMedicalRecords = results[5] || [];
+    cachedStaff = results[6] || [];
+    cachedInsuranceProviders = results[7] || [];
+    cachedTestTypes = results[8] || [];
+    cachedPatientTests = results[9] || [];
+    cachedInventoryItems = results[10] || [];
 
     // Populate dropdowns once data is loaded
     populatePatientDropdown('appointmentPatient');
@@ -962,10 +978,19 @@ async function showDashboard() {
 }
 
 async function updateDashboardMetrics() {
-    const patients = await fetchData('patients');
-    const doctors = await fetchData('doctors');
-    const todayAppointments = await fetchData('reports/today-appointments');
-    const pendingBills = await fetchData('bills'); // Fetch all to filter client-side
+    const promises = [
+        fetchData('patients'),
+        fetchData('doctors'),
+        fetchData('reports/today-appointments'),
+        fetchData('bills')
+    ];
+    
+    const results = await Promise.all(promises);
+    
+    const patients = results[0];
+    const doctors = results[1];
+    const todayAppointments = results[2];
+    const pendingBills = results[3];
 
     document.getElementById('totalPatients').textContent = patients ? patients.length : 0;
     document.getElementById('totalDoctors').textContent = doctors ? doctors.length : 0;
@@ -978,8 +1003,16 @@ async function updateDashboardCharts() {
     Object.values(currentDashboardCharts).forEach(chart => { if (chart && typeof chart.destroy === 'function') chart.destroy(); });
     currentDashboardCharts = {};
 
-    // Appointments Trend (Daily)
-    const appointmentsData = await fetchData('appointments');
+    const promises = [
+        fetchData('appointments'),
+        fetchData('bills')
+    ];
+    
+    const results = await Promise.all(promises);
+    
+    const appointmentsData = results[0];
+    const billsData = results[1];
+
     if (appointmentsData) {
         const dailyAppointments = {};
         const today = new Date();
@@ -1002,8 +1035,6 @@ async function updateDashboardCharts() {
         createChart('appointmentsChart', 'line', 'Appointments Trend (Last 7 Days)', labels, data, currentDashboardCharts);
     }
 
-    // Revenue Trend (Daily)
-    const billsData = await fetchData('bills');
     if (billsData) {
         const dailyRevenue = {};
         const today = new Date();

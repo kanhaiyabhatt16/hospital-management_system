@@ -7,6 +7,8 @@ import io
 import json
 import re
 import hashlib
+from queue import Queue, Empty
+import threading
 from flask_cors import CORS # Import CORS
 from migrate_db import run_migrations
 
@@ -112,11 +114,91 @@ db_config = {
     "cursorclass": pymysql.cursors.DictCursor
 }
 
+class SimpleConnectionPool:
+    def __init__(self, minconn=1, maxconn=15, **kwargs):
+        self.maxconn = maxconn
+        self.kwargs = kwargs
+        self.pool = Queue(maxsize=maxconn)
+        self.lock = threading.Lock()
+        self.created_conns = 0
+        for _ in range(minconn):
+            conn = self._create_connection()
+            if conn:
+                self.pool.put(conn)
+
+    def _create_connection(self):
+        try:
+            conn = pymysql.connect(autocommit=True, **self.kwargs)
+            conn.cursorclass = HospitalCursor
+            with self.lock:
+                self.created_conns += 1
+            return conn
+        except Exception as e:
+            print(f"Failed to create database connection: {e}")
+            return None
+
+    def getconn(self):
+        try:
+            conn = self.pool.get(block=False)
+            try:
+                conn.ping(reconnect=True)
+            except Exception:
+                conn = self._create_connection()
+            return conn
+        except Empty:
+            create_new = False
+            with self.lock:
+                if self.created_conns < self.maxconn:
+                    create_new = True
+            if create_new:
+                conn = self._create_connection()
+                if conn:
+                    return conn
+            conn = self.pool.get(block=True)
+            try:
+                conn.ping(reconnect=True)
+            except Exception:
+                conn = self._create_connection()
+            return conn
+
+    def putconn(self, conn):
+        if conn:
+            try:
+                self.pool.put(conn, block=False)
+            except Exception:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+                with self.lock:
+                    self.created_conns -= 1
+
+class PooledConnectionProxy:
+    def __init__(self, conn, pool):
+        self._conn = conn
+        self._pool = pool
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+    def close(self):
+        self._pool.putconn(self._conn)
+
+db_pool = None
+
+def init_db_pool():
+    global db_pool
+    pool_config = db_config.copy()
+    pool_config.pop('cursorclass', None)
+    db_pool = SimpleConnectionPool(minconn=2, maxconn=15, **pool_config)
+
 def get_db_connection():
-    """Establishes a new database connection."""
-    conn = pymysql.connect(**db_config)
-    conn.cursorclass = HospitalCursor
-    return conn
+    """Returns a pooled database connection wrapper."""
+    global db_pool
+    if db_pool is None:
+        init_db_pool()
+    conn = db_pool.getconn()
+    return PooledConnectionProxy(conn, db_pool)
 
 # --- Error Handlers ---
 @app.errorhandler(404)
