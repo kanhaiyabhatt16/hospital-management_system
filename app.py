@@ -202,6 +202,46 @@ def login():
         cursor.close()
         conn.close()
 
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.json
+    if not data or not data.get('hospital') or not data.get('username') or not data.get('password'):
+        return jsonify({"error": "Please provide hospital, username, and password"}), 400
+        
+    hospital = data.get('hospital').strip()
+    username = data.get('username').strip()
+    password = data.get('password')
+    role = data.get('role', 'Staff')  # Defaults to Staff
+    
+    if role not in ['Admin', 'Staff']:
+        return jsonify({"error": "Invalid role specified"}), 400
+        
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    try:
+        # Check if the username already exists for this hospital
+        cursor.execute("SELECT * FROM users WHERE hospital = %s AND username = %s", (hospital, username))
+        existing_user = cursor.fetchone()
+        if existing_user:
+            return jsonify({"error": "Username is already registered under this hospital."}), 400
+            
+        # Register new user
+        cursor.execute("""
+            INSERT INTO users (hospital, username, password_hash, role)
+            VALUES (%s, %s, %s, %s)
+        """, (hospital, username, password_hash, role))
+        conn.commit()
+        
+        return jsonify({"message": "User registered successfully"}), 201
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
 # -----------------------------------------------------------
 # API Endpoints (from your provided 1.1.py, kept as is)
 # -----------------------------------------------------------

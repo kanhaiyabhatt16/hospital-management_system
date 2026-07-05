@@ -532,6 +532,88 @@ function renderSearchResults(tableBodyId, results, type) {
 
 // --- Authentication & Session Handlers ---
 
+function toggleAuthMode(mode) {
+    const loginFormBox = document.getElementById('loginFormBox');
+    const signupFormBox = document.getElementById('signupFormBox');
+    
+    // Clear error messages
+    const loginError = document.getElementById('loginError');
+    if (loginError) loginError.style.display = 'none';
+    const signupError = document.getElementById('signupError');
+    if (signupError) signupError.style.display = 'none';
+    const signupSuccess = document.getElementById('signupSuccess');
+    if (signupSuccess) signupSuccess.style.display = 'none';
+    
+    if (mode === 'signup') {
+        if (loginFormBox) loginFormBox.style.display = 'none';
+        if (signupFormBox) signupFormBox.style.display = 'block';
+    } else {
+        if (signupFormBox) signupFormBox.style.display = 'none';
+        if (loginFormBox) loginFormBox.style.display = 'block';
+    }
+}
+
+async function handleSignUpSubmit(event) {
+    event.preventDefault();
+    const hospital = document.getElementById('signupHospital').value.trim();
+    const username = document.getElementById('signupUsername').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const confirmPassword = document.getElementById('signupConfirmPassword').value;
+    
+    const errorEl = document.getElementById('signupError');
+    const successEl = document.getElementById('signupSuccess');
+    if (errorEl) errorEl.style.display = 'none';
+    if (successEl) successEl.style.display = 'none';
+    
+    if (password !== confirmPassword) {
+        if (errorEl) {
+            errorEl.textContent = 'Passwords do not match!';
+            errorEl.style.display = 'block';
+        }
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/register`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ hospital, username, password, role: 'Staff' })
+        });
+        
+        const data = await response.json();
+        if (response.ok) {
+            if (successEl) {
+                successEl.textContent = 'Account created successfully! Redirecting to login...';
+                successEl.style.display = 'block';
+            }
+            
+            // Clear inputs
+            document.getElementById('signupForm').reset();
+            
+            // Toggle to login form after 2 seconds
+            setTimeout(() => {
+                toggleAuthMode('login');
+                // Pre-fill hospital and username in login form
+                document.getElementById('loginHospital').value = hospital;
+                document.getElementById('loginUsername').value = username;
+            }, 2000);
+        } else {
+            if (errorEl) {
+                errorEl.textContent = data.error || 'Failed to register';
+                errorEl.style.display = 'block';
+            }
+        }
+    } catch (err) {
+        console.error('Registration error:', err);
+        if (errorEl) {
+            errorEl.textContent = 'Connection error. Please try again.';
+            errorEl.style.display = 'block';
+        }
+    }
+}
+
 function checkAuthSession() {
     const username = sessionStorage.getItem('username');
     const role = sessionStorage.getItem('role');

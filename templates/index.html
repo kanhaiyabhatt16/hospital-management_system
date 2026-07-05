@@ -15,7 +15,8 @@
 <body>
     <!-- Login Screen Overlay -->
     <div id="loginOverlay" class="login-overlay">
-        <div class="login-box">
+        <!-- Login Form Box -->
+        <div class="login-box" id="loginFormBox">
             <div class="login-header">
                 <h2>Hospital Management System</h2>
                 <p>Enter your hospital code & credentials to connect</p>
@@ -36,6 +37,37 @@
                 </div>
                 <button type="submit" class="btn btn-login"><i class="fas fa-sign-in-alt"></i> Login</button>
             </form>
+            <p class="auth-toggle-link">Don't have an account? <a href="#" onclick="toggleAuthMode('signup')">Sign Up</a></p>
+        </div>
+
+        <!-- Sign Up Form Box -->
+        <div class="login-box" id="signupFormBox" style="display: none;">
+            <div class="login-header">
+                <h2>Create Account</h2>
+                <p>Register as staff to access a hospital database</p>
+            </div>
+            <div id="signupError" class="login-error" style="display: none;"></div>
+            <div id="signupSuccess" class="login-success-msg" style="display: none;"></div>
+            <form id="signupForm" onsubmit="handleSignUpSubmit(event)">
+                <div class="form-group">
+                    <label for="signupHospital"><i class="fas fa-hospital"></i> Hospital Name/Code</label>
+                    <input type="text" id="signupHospital" placeholder="e.g. abc" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupUsername"><i class="fas fa-user"></i> Username / Email</label>
+                    <input type="text" id="signupUsername" placeholder="e.g. user@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword"><i class="fas fa-key"></i> Password</label>
+                    <input type="password" id="signupPassword" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword"><i class="fas fa-key"></i> Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-login"><i class="fas fa-user-plus"></i> Sign Up</button>
+            </form>
+            <p class="auth-toggle-link">Already have an account? <a href="#" onclick="toggleAuthMode('login')">Login</a></p>
         </div>
     </div>
 

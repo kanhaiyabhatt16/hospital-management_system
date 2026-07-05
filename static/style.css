@@ -1116,3 +1116,32 @@ input:checked+.slider:before {
 .btn-login:hover {
     transform: translateY(-1px);
 }
+
+.auth-toggle-link {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    opacity: 0.8;
+}
+
+.auth-toggle-link a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-toggle-link a:hover {
+    text-decoration: underline;
+}
+
+.login-success-msg {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    text-align: center;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
